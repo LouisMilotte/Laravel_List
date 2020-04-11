@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Auth;
+use App\User as UsersModel;
+use App\Lists as ListsModel;
 class users extends Controller
 {
     /**
@@ -36,23 +38,10 @@ class users extends Controller
      */
     public function store(Request $request)
     {
-	$this->validate(request(), [
-            'name' => 'required',
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
-		
-		//$user = User::create(Request(['name','email','password']));
-		$user = DB::table("users")->insert([
-			"name"=>$request->input("name"),
-			"email"=>$request->input("email"),
-			"password"=>Hash::make($request->input("password"))
-		]);
-		
-		//auth()->login($user);
-		//return redirect()->to('/');
-		
-		return view("users.pending_validation",["email"=>$request->input("email")]);
+		abort(404);
+		/*
+		*placeholder, the auth system handles this request
+		*/
     }
 
     /**
@@ -64,10 +53,12 @@ class users extends Controller
     public function show($id)
     {
 		
-		$userData = DB::table("users")->where("id",$id)->where("active",1)->get();
+		$userData = UsersModel::find($id)->where("active",1)->get();
+		$listsData = ListsModel::where("user_id",$id)->where("active",1)->where("is_public",1)->get();
 		
+		//$userData = UsersModel::select("users.name as username","lists.name as listsName")->join("lists","lists.user_id","=","users.id")->where("users.id",$id)->where("lists.is_public",true)->where("users.active",1)->get();
 		if(count((array)$userData) == 1){
-			return view("users.profile",["userData"=>$userData]);
+			return view("users.profile",["userData"=>$userData,"listsData"=>$listsData]);
 		}else{
 			abort(404);
 		}
@@ -83,7 +74,9 @@ class users extends Controller
     {
         //
 		$this->middleware('auth');
-		return view("users.account",["userData"=>DB::table("users")->select('name','email','active')->where("id",Auth::id())->where("active",1)->get()]);
+		$userData = UsersModel::select("name","email","active")->where("id",Auth::id())->where("active",1)->get();
+		//return view("users.account",["userData"=>DB::table("users")->select('name','email','active')->where("id",Auth::id())->where("active",1)->get()]);
+		return view("users.account",["userData"=>$userData]);
     }
 
     /**
@@ -95,7 +88,15 @@ class users extends Controller
      */
     public function update(Request $request)
     {$this->middleware('auth');
-        DB::table("users")->where("id",Auth::id())->update($request->all());
+       // DB::table("users")->where("id",Auth::id())->update($request->all());
+	   $user = UsersModel::find(Auth::id());
+	   $user->name = $request->name;
+	   $user->email = $request->email;
+	   if($request->password !== "" && $request->password === $request->password_confirm){
+		$user->password = Hash::make($request->password);
+	   }
+	   $user->save();
+	   
     }
 
     /**
@@ -107,7 +108,11 @@ class users extends Controller
     public function destroy($id)
     {$this->middleware('auth');
         if($id === Auth::id()){
-			DB::table("users")->where("id",$id)->update(["active"=>0]);
+			//DB::table("users")->where("id",$id)->update(["active"=>0]);
+			//UsersModel::destroy(Auth::id());
+			$user = UsersModel::find(Auth::id());
+			$user->active = 0;
+			$user->save();
 		}else{
 			abort(404);
 		}

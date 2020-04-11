@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Auth;
 use Carbon\Carbon;
+use App\Lists as ListsModel;
+use App\User as UsersModel;
 class lists extends Controller
 {
     /**
@@ -65,8 +67,10 @@ class lists extends Controller
      */
     public function show($slug)
     {$this->middleware('auth');
-        $listData = DB::table("lists")->where("slug",$slug)->get()->toArray();
-		if($listData[0]->user === Auth::id() || $listData[0]->active === 1 && $listData[0]->is_public === 1){
+        $listData = DB::table("lists")->select("users.name as username","users.id as uid","lists.*")->where("lists.slug",$slug)->join("users","users.id","=","lists.user_id")->get()->toArray();
+		//$listData = ListsModel::where("lists.slug",$slug)->get();
+		if($listData[0]->user_id === Auth::id() || $listData[0]->active === 1 && $listData[0]->is_public === 1){
+			//$userData = UsersModel::find($listData[0]->user);
 			return view("lists.single",["listData"=>$listData]);
 		}else{
 			return view("lists.missing");
@@ -81,8 +85,8 @@ class lists extends Controller
      */
     public function edit($slug)
     {$this->middleware('auth');
-        $listData = DB::table("lists")->where("slug",$slug)->get()->toArray();
-		
+        //$listData = DB::table("lists")->where("slug",$slug)->get()->toArray();
+		$listData = ListsModel::where("slug",$slug)->get();
 		if(count($listData) && $listData[0]->user === Auth::id()){
 			return view("lists.edit",["listData"=>$listData]);
 		}else{
@@ -102,6 +106,7 @@ class lists extends Controller
     public function update(Request $request)
     {
 		$this->middleware('auth');
+		/*
         $listData = DB::table("lists")->where("slug",$request->slug)->where("user",Auth::id())->update([
 			"name"=>$request->name,
 			"list"=>serialize((array)$request->list),
@@ -110,6 +115,17 @@ class lists extends Controller
 			"tags"=>serialize(explode(",",$request->tags)),
 			"updated_at"=>Carbon::now()->toDateTimeString()
 		]);
+		*/
+		//$listData = Lists
+		$list = ListsModel::find($request->id);
+		$list->name = $request->name;
+		$list->list = serialize((array)$request->list);
+		$list->is_public = $request->is_public === "on";
+		$list->active = $request->active === "on";
+		$list->tags = serialize(explode(",",$request->tags));
+		$list->updated_at = Carbon::now()->toDateTimeString();
+		$list->save();
+		
 		return redirect("/list/show/".$request->slug);
     }
 
@@ -121,7 +137,8 @@ class lists extends Controller
      */
     public function destroy(Request $request)
     {$this->middleware('auth');
-		$delete = DB::table("lists")->where("slug",$request->slug)->where("user",Auth::id())->delete();
+		//$delete = DB::table("lists")->where("slug",$request->slug)->where("user",Auth::id())->delete();
+		ListsModel::destroy($request->id);
         //echo json_encode(array("status"=>($store > 0 ? 200:400),"message"=>($store > 0 ? "Record created successfully.":"Record failed to create.")));
 		return redirect("/home");
     }

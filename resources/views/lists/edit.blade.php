@@ -65,6 +65,7 @@
 			
 			<input type="hidden" name="_token" id="csrf-token" value="{{ csrf_token() }}" />
 			<input type="hidden" name="slug" value="{{$list->slug}}">
+			<input type="hidden" name="id" value="{{$list->id}}">
 		</form>
 	</div>
 </section>

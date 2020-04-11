@@ -6,11 +6,12 @@
 <section class="row">
 	<div class="col-8 offset-2">
 		<h1><?php echo $list->name; ?></h1>
-		<p>Created <?php echo date("d/m/Y",strtotime($list->created_at)); ?> - Post Is: <?php echo ($list->is_public == true ? "Public":"Not Public"); ?> and <?php echo ($list->active == true ? "Active":"Not Active"); ?></p>
+		<p>Created By <a href="<?php echo url("/user/profile/".$list->uid); ?>"><?php echo $list->username; ?></a> On <?php echo date("d/m/Y",strtotime($list->created_at)); ?> - Post Is: <?php echo ($list->is_public == true ? "Public":"Not Public"); ?> and <?php echo ($list->active == true ? "Active":"Not Active"); ?></p>
 		<ul class='list-group'>
 			<?php $lists = unserialize($list->list); foreach($lists as $listItem):?>
 			<li class="list-group-item"><?php echo $listItem; ?></li>
 			<?php endforeach; ?>
+			<li class="list-group-item">Tags: <?php echo implode(", ",unserialize($list->tags)); ?></li>
 		</ul>
 	</div>
 </section>

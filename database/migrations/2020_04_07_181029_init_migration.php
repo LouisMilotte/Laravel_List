@@ -26,7 +26,7 @@ class InitMigration extends Migration
         });
         Schema::create('lists', function (Blueprint $table) {
             $table->id();
-            $table->integer('user');
+            $table->integer('user_id');
 			$table->text('list');
 			$table->boolean("active")->default(0);
 			$table->boolean("public")->default(1);

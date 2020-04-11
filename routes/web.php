@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Lists as Lists;
+use App\User as UsersModel;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -24,6 +25,7 @@ Route::get("/user",function(){
 	abort(404);
 });
 Route::get("/user/account","users@edit");
+Route::get("/user/profile/{id}","users@show");
 Route::get("/list/create","lists@create");
 Route::post("/list/store","lists@store");
 Route::get("/list/show/{slug?}","lists@show");
@@ -35,7 +37,8 @@ Auth::routes();
 
 Route::get('/home',function(){
 	if(Auth::check()){
-		return view('home',["listData"=>DB::table("lists")->where("user",Auth::id())->get()]);
+		$user = UsersModel::find(Auth::id());
+		return view("home",["listData"=>$user->lists()->where("id",Auth::id())->get()]);
 	}else{
 		return view('home');
 	}
